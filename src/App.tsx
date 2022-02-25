@@ -1,7 +1,32 @@
-import React, { FC, Fragment } from 'react';
+import React, { FC, Fragment, useRef, useState } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 
+interface ITodo {
+  id: number;
+  task: string;
+  deadline: string;
+}
+
 const App: FC = () => {
+  const taskRef = useRef<HTMLInputElement>(null);
+  const deadlineRef = useRef<HTMLInputElement>(null);
+  const [newTodo, setNewTodo] = useState<ITodo>({ id: 0, task: "", deadline: "" });
+  const [todos, setTodos] = useState<ITodo[]>([]);
+
+  const saveTodo = () => {
+    const newId = todos.length > 0 ? todos[todos.length - 1].id + 1 : 1;
+    setNewTodo({
+      id: newId,
+      task: taskRef.current!.value,
+      deadline: deadlineRef.current!.value
+    });
+    taskRef.current!.value = "";
+    deadlineRef.current!.value = "";
+    setTodos([...todos, newTodo]);
+    console.log(todos);
+
+
+  };
 
   return (
     <>
@@ -10,10 +35,18 @@ const App: FC = () => {
         <Container>
           <Header>TODO APP</Header>
           <AddTask>
-            <AddTaskInput placeholder="Add a task" type="text" />
-            <AddTaskInput placeholder="Add a date"  type="date"/>
-            <AddTaskButton>Add</AddTaskButton>
+            <AddTaskInput name="task" placeholder="Add a task" type="text" ref={taskRef} />
+            <AddTaskInput name="deadline" placeholder="Add a date" type="date" ref={deadlineRef} />
+            <AddTaskButton onClick={saveTodo}>Add</AddTaskButton>
           </AddTask>
+          <DisplayTodos>
+            {todos.map((todo: ITodo) => (
+              <Todo key={todo.id}>
+                <TodoTask>{todo.task}</TodoTask>
+                <TodoDeadline>{todo.deadline}</TodoDeadline>
+              </Todo>
+            ))}
+          </DisplayTodos>
         </Container>
       </Wrapper>
     </>
@@ -62,6 +95,11 @@ const AddTask = styled.div`
 const AddTaskInput = styled.input`
 
 `
-const AddTaskButton = styled.input`
+const AddTaskButton = styled.button`
 
 `
+const DisplayTodos = styled.div`
+`
+const Todo = styled.div``
+const TodoTask = styled.p``
+const TodoDeadline = styled.p``
