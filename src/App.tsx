@@ -1,4 +1,4 @@
-import React, { FC, Fragment, useRef, useState } from 'react';
+import React, { FC, Fragment, useEffect, useRef, useState } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 
 interface ITodo {
@@ -10,11 +10,19 @@ interface ITodo {
 const App: FC = () => {
   const taskRef = useRef<HTMLInputElement>(null);
   const deadlineRef = useRef<HTMLInputElement>(null);
-  const [newTodo, setNewTodo] = useState<ITodo>({ id: 0, task: "", deadline: "" });
+  const [newTodo, setNewTodo] = useState<ITodo>({} as ITodo);
   const [todos, setTodos] = useState<ITodo[]>([]);
 
-  const saveTodo = () => {
+  //get todo list from local storage
+  useEffect(() => {
+    const todos = JSON.parse(localStorage.getItem("todos") || "[]");
+    setTodos(todos);
+  }, []);
+
+  //create new todo
+  const createNewTodo = () => {
     const newId = todos.length > 0 ? todos[todos.length - 1].id + 1 : 1;
+
     setNewTodo({
       id: newId,
       task: taskRef.current!.value,
@@ -23,10 +31,22 @@ const App: FC = () => {
     taskRef.current!.value = "";
     deadlineRef.current!.value = "";
     setTodos([...todos, newTodo]);
+
+  //save new todo to local storage
+    localStorage.removeItem("todos");
+    localStorage.setItem("todos", JSON.stringify(todos));
     console.log(todos);
 
 
   };
+
+  const deleteTodo = (id: number) => {
+    setTodos(todos.filter(todo => todo.id !== id));
+    //remove todo from local storage
+    localStorage.removeItem("todos");
+    localStorage.setItem("todos", JSON.stringify(todos));
+    
+  };  
 
   return (
     <>
@@ -37,13 +57,18 @@ const App: FC = () => {
           <AddTask>
             <AddTaskInput name="task" placeholder="Add a task" type="text" ref={taskRef} />
             <AddTaskInput name="deadline" placeholder="Add a date" type="date" ref={deadlineRef} />
-            <AddTaskButton onClick={saveTodo}>Add</AddTaskButton>
+            <AddTaskButton onClick={createNewTodo}>Add</AddTaskButton>
           </AddTask>
           <DisplayTodos>
             {todos.map((todo: ITodo) => (
               <Todo key={todo.id}>
-                <TodoTask>{todo.task}</TodoTask>
-                <TodoDeadline>{todo.deadline}</TodoDeadline>
+                <div>
+                  <TodoTask>{todo.task}</TodoTask>
+                  <TodoDeadline>{todo.deadline}</TodoDeadline>
+                </div>
+                <div>
+                  <TodoButton onClick={()=>deleteTodo(todo.id)}>Delete</TodoButton>
+                </div>
               </Todo>
             ))}
           </DisplayTodos>
@@ -72,10 +97,12 @@ const Wrapper = styled.div`
   background-image: linear-gradient(to right, #f6d365 0%, #fda085 100%);
   display: flex;
   justify-content: center;
-  place-items: center;
+  padding-top: 5rem;
 `
 const Container = styled.div`
   min-width: 320px;
+  max-height:80vh;
+  overflow-y: auto;
   padding: 1.5rem;
   background-image: linear-gradient(to bottom, #ffffff 0%, #ffffff2d 100%);
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
@@ -90,16 +117,56 @@ const Header = styled.h1`
 `
 
 const AddTask = styled.div`
-
+  display: flex;
+  flex-direction: column;
 `
 const AddTaskInput = styled.input`
-
+  display: inline-block;
+  width: 100%;
+  padding: 0.25rem;
+  border:none;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer
 `
 const AddTaskButton = styled.button`
-
+  display: inline-block;
+  width: 100%;
+  padding: 0.25rem;
+  background-image: linear-gradient(to right,#000 0%,#f6d365 100%);
+  border:none;
+  border-radius: 0.25rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  color: #fff;
+  cursor: pointer;
 `
 const DisplayTodos = styled.div`
+  margin:1rem 0;
+  padding-top: 1rem;
 `
-const Todo = styled.div``
-const TodoTask = styled.p``
-const TodoDeadline = styled.p``
+const Todo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .25rem;
+  padding: 0.25rem 0.25rem;
+  background-image: linear-gradient(to bottom, #ffffff 0%, #ffffff2d 100%);
+`
+const TodoTask = styled.p`
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 500;
+`
+const TodoDeadline = styled.p`
+  text-align: left;
+  font-size: 0.75rem;
+`
+
+const TodoButton = styled.button`
+  color:red;
+  border:none;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  drop-shadow: 0px 0px 10px rgba(187, 30, 30, 0.822);
+
+`
